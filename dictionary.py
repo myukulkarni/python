@@ -25,3 +25,5 @@ average = sum(marks) / len(marks)
 
 # Step 7: Print the average rounded to 2 decimal places
 print(f"{average:.2f}")
+
+

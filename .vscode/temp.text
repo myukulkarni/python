@@ -1,0 +1,6 @@
+User Authentication:
+Sign Up / Sign In: Allow users to create accounts using email, phone numbers, or social media logins.
+Password Recovery: Implement options for users to reset their passwords if they forget them.
+2. User Profiles:
+Profile Creation: Let users create and edit their profiles, including setting a profile picture, display name, and status.
+Online/Offline Status: Show users' availability status to their contacts.

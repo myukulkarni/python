@@ -1,0 +1,194 @@
+from django.shortcuts import render
+from django.contrib.auth import login, authenticate, logout
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from rest_framework import generics, status
+from rest_framework.response import Response
+from django.core.mail import send_mail
+import random
+from .models import CustomUser, OTP
+from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework import permissions
+
+# User Registration View
+class UserRegistrationView(generics.CreateAPIView):
+    queryset = CustomUser.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        # Extract user data from request
+        username = request.data.get('username')
+        password = request.data.get('password')
+        email = request.data.get('email')
+        first_name = request.data.get('first_name')
+        last_name = request.data.get('last_name')
+        middle_name = request.data.get('middle_name')
+        date_of_birth = request.data.get('date_of_birth')
+        gender = request.data.get('gender')
+        contact_number = request.data.get('contact_number')
+        hobbies = request.data.get('hobbies')
+        address = request.data.get('address')
+        language = request.data.get('language')
+
+        # Create the user instance
+        user = CustomUser(
+            username=username,
+            email=email,
+            first_name=first_name,
+            last_name=last_name,
+            middle_name=middle_name,
+            date_of_birth=date_of_birth,
+            gender=gender,
+            contact_number=contact_number,
+            hobbies=hobbies,
+            address=address,
+            language=language,
+        )
+        user.set_password(password)  # Hash the password
+        user.save()  # Save the user instance
+
+        # Generate and send OTP
+        otp_code = random.randint(100000, 999999)
+        OTP.objects.create(user=user, otp_code=otp_code)
+        send_mail(
+            'Your OTP Code',
+            f'Your OTP code is {otp_code}',
+            'sumitsangave2631@gmail.com',  # Replace with your actual email
+            [user.email],
+            fail_silently=False,
+        )
+
+        # Return the user ID and a success message
+        return Response({
+            'id': user.id,  # User ID
+            'message': 'User registered successfully. OTP sent to email.'
+        }, status=status.HTTP_201_CREATED)
+
+
+# OTP Verification View
+class VerifyOTPView(APIView):
+    def post(self, request, *args, **kwargs):
+        otp_code = request.data.get('otp_code')
+        user_id = request.data.get('user_id')
+
+        try:
+            otp = OTP.objects.get(user_id=user_id, otp_code=otp_code)
+            if not otp.is_verified:
+                otp.is_verified = True
+                otp.save()
+                return Response({"message": "OTP verified successfully."}, status=status.HTTP_200_OK)
+            else:
+                return Response({"error": "OTP is already verified."}, status=status.HTTP_400_BAD_REQUEST)
+        except OTP.DoesNotExist:
+            return Response({"error": "Invalid OTP."}, status=status.HTTP_400_BAD_REQUEST)
+
+
+# User Login View
+class LoginView(APIView):
+    def post(self, request):
+        username = request.data.get('username')
+        password = request.data.get('password')
+
+        print(f"Attempting to log in with username: {username}")
+
+        user = authenticate(request, username=username, password=password)
+
+        if user is not None:
+            login(request, user)
+
+            # Generate JWT tokens
+            refresh = RefreshToken.for_user(user)
+            access = str(refresh.access_token)
+
+            return Response({
+                'message': 'Login successful!',
+                'refresh': str(refresh),
+                'access': access,
+            }, status=status.HTTP_200_OK)
+        else:
+            print("Authentication failed: Invalid credentials.")
+            return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+
+
+# Profile View for user profiles
+class Profile(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    # Retrieve the profiles of all users
+    def get(self, request):
+        users = CustomUser.objects.all().values()  # Retrieve all user profiles
+        return Response(users, status=status.HTTP_200_OK)
+
+    # Retrieve a single user's profile
+    def post(self, request):
+        user_id = request.data.get('user_id')  # Get user ID from request data
+        try:
+            user = CustomUser.objects.get(id=user_id)  # Fetch the user profile
+            user_data = {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'middle_name': user.middle_name,
+                'date_of_birth': user.date_of_birth,
+                'gender': user.gender,
+                'contact_number': user.contact_number,
+                'hobbies': user.hobbies,
+                'address': user.address,
+                'language': user.language,
+            }
+            return Response(user_data, status=status.HTTP_200_OK)
+        except CustomUser.DoesNotExist:
+            return Response({'error': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+    # Update user profile
+    def put(self, request):
+        user_id = request.data.get('user_id')  # Get user ID from request data
+        try:
+            user = CustomUser.objects.get(id=user_id)  # Fetch the user profile
+            user.username = request.data.get('username', user.username)
+            user.email = request.data.get('email', user.email)
+            user.first_name = request.data.get('first_name', user.first_name)
+            user.last_name = request.data.get('last_name', user.last_name)
+            user.middle_name = request.data.get('middle_name', user.middle_name)
+            user.date_of_birth = request.data.get('date_of_birth', user.date_of_birth)
+            user.gender = request.data.get('gender', user.gender)
+            user.contact_number = request.data.get('contact_number', user.contact_number)
+            user.hobbies = request.data.get('hobbies', user.hobbies)
+            user.address = request.data.get('address', user.address)
+            user.language = request.data.get('language', user.language)
+
+            user.save()  # Save the updated user instance
+
+            return Response({'message': 'User profile updated successfully.'}, status=status.HTTP_200_OK)
+        except CustomUser.DoesNotExist:
+            return Response({'error': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+
+# User Logout View
+def logout_view(request):
+    logout(request)
+    return JsonResponse({'message': 'Logout successful'}, status=200)
+
+
+# Home/Dashboard View
+@login_required
+def dashboard_view(request):
+    return render(request, 'dashboard.html')
+
+
+# User Profile View
+@login_required
+def profile_view(request):
+    user = request.user
+    return render(request, 'profile.html', {'user': user})
+
+
+# User Settings View
+@login_required
+def settings_view(request):
+    context = {
+        'user': request.user,
+    }
+    return render(request, 'settings.html', context)

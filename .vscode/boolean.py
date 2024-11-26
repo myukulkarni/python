@@ -48,30 +48,43 @@
 #     if books[i][1][2]>130:
 
 
-class borrow:
-    def __init__(self,) :
-        pass        
+# class borrow:
+#     def __init__(self,) :
+#         pass        
             
 
-class books:
-    def __init__(self,id,title,author,publish_date,ratings,price):
-        self.id=id
-        self.title=title
-        self.author=author
-        self.publish_date=publish_date
-        self.ratings=ratings
-        self.price=price
+# class books:
+#     def __init__(self,id,title,author,publish_date,ratings,price):
+#         self.id=id
+#         self.title=title
+#         self.author=author
+#         self.publish_date=publish_date
+#         self.ratings=ratings
+#         self.price=price
     
-    def view_books(self):
-        print("book_id: ",self.id)
-        print("book_name: ",self.title)
-        print("book_author: ",self.author)
-        print("publish_date: ",self.publish_date)
-        print("ratings: ",self.ratings)
-        print("price: ",self.price)         
+#     def view_books(self):
+#         print("book_id: ",self.id)
+#         print("book_name: ",self.title)
+#         print("book_author: ",self.author)
+#         print("publish_date: ",self.publish_date)
+#         print("ratings: ",self.ratings)
+#         print("price: ",self.price)         
          
-b1=books(1,"the inferno","den","1990",3,150)
-b1.view_books()
+# b1=books(1,"the inferno","den","1990",3,150)
+# b1.view_books())
 
 
 
+f=open("C:\\Users\\HP\\OneDrive\\Desktop\\python\\temp.txt","r")
+
+a=f.readable()
+print(a)
+
+b=f.readline()
+print(b)
+str=b
+a=str[0:4]
+for i in a:
+
+     print(i)
+    
