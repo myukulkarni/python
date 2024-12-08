@@ -19,7 +19,6 @@ class Student:
         self.assign_department_course()
 
     def assign_department_course(self):
-        """Assign department and course based on SSC and HSC marks"""
         if self.SSC_Mark > 70 and self.HSC_Mark > 70:
             self.department = "Computer Science"
             self.course = "B.Tech"
